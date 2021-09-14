@@ -1,0 +1,27 @@
+
+syntax = "proto3";
+option csharp_namespace = "Abn.Analytics.Endpoint.Grpc";
+package abnAnalytics;
+
+service  AnalyticsInformation {
+rpc StartCalculation(DataInput) returns ( StatusObject);
+rpc GetStatus(SearchInput) returns (StatusObject);
+}
+
+message DataInput {
+string name=1;
+string email=2;
+} 
+ 
+message SearchInput{
+	string Id=1;
+}
+
+message   StatusObject {
+string id=1;
+string name=2;
+string email=3;
+int32 progress=4;
+string result=5;
+string status=6;
+}

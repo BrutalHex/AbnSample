@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  SqlExpress:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    hostname: sqlexpress
+    ports:
+      - "1433:1433"
+    environment:
+        - ACCEPT_EULA=Y
+        - SA_PASSWORD=123@hell456789DELTA
+
+  Abn.Api:
+      image: ${DOCKER_REGISTRY-}api
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - ConnectionStrings__db=Server=sqlexpress;User Id=sa;Password=123@hell456789DELTA;
+      ports:
+        - "5001:5001"
+        - "5000:5000"
+      volumes:
+        - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+        - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+     
+      build:
+        context: './'
+        dockerfile: API/02.Services/AbnAnalytics/Abn.Analytics.Endpoint/Dockerfile
+      depends_on:
+        - SqlExpress
+  Abn.UI:
+          image: ${DOCKER_REGISTRY-}ui
+          ports:
+            - "3000:3000"
+          env_file: .env
+          build:
+            context: './UI'
+            dockerfile: ./Dockerfile
