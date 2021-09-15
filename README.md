@@ -1,5 +1,5 @@
 ## Run
-after executing `docker-compose -f docker-compose.yml up` then 
+after executing `docker-compose -f docker-compose.yml up -d` then 
 you can navigate to  `http://localhost:3000` for UI project 
 
 ## Grpc
