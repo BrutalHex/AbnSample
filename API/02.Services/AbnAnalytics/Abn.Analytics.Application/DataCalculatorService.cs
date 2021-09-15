@@ -13,6 +13,8 @@ using Abn.Framework.Core.Ef;
 using AutoMapper;
  
 using System.Threading;
+using MassTransit;
+using Abn.Analytics.Application.AbnHub;
 
 namespace Abn.Analytics.Application
 {
@@ -22,16 +24,18 @@ namespace Abn.Analytics.Application
         private readonly IStatusObjectRepository _statusObjectRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-    
-        public DataCalculatorService (IStatusObjectRepository statusObjectRepository, IUnitOfWork unitOfWork,IMapper mapper )
+        private readonly IPublishEndpoint _publishEndpoint;
+        private readonly ICommunicationHub _communicationHub;
+        public DataCalculatorService (IStatusObjectRepository statusObjectRepository, IUnitOfWork unitOfWork,IMapper mapper , IPublishEndpoint publishEndpoint, ICommunicationHub communicationHub)
         {
             _statusObjectRepository = statusObjectRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-        
+            _publishEndpoint = publishEndpoint;
+            _communicationHub = communicationHub;
         }
 
-        Random _random = new Random(0);
+        
         Random _randomStatus = new Random(0);
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace Abn.Analytics.Application
             {
                 throw new NotFoundException(id);
             }
-            await ProcessCalculation(item);
+          
             return item;
         }
 
@@ -66,8 +70,7 @@ namespace Abn.Analytics.Application
             //store it into Db
             model = await SaveToDb(model);
 
-       
-
+            await _publishEndpoint.Publish(model, new CancellationToken());
 
             return model;
         }
@@ -81,11 +84,14 @@ namespace Abn.Analytics.Application
         /// <returns></returns>
         public async Task ProcessCalculation(StatusObject input)
         {
-
-            await Simulate(10000, input, 10,Status.Running);
-            await Simulate(5000, input, 40, Status.Running);
-            var waitNumber = GetWait();
-            await Simulate(10000 * waitNumber, input, 60, (Status)Getstatus());
+            for (int i = 1; i < 10; i++)
+            {
+                   await Simulate(1000, input, i,Status.Running);
+            }
+           
+            await Simulate(4000, input, 70, Status.Running);
+   
+            await Simulate(3000  , input, 100, (Status)Getstatus());
 
         }
 
@@ -101,15 +107,18 @@ namespace Abn.Analytics.Application
         private async Task Simulate(int seconds, StatusObject data,int percent, Status status)
         {
             Thread.Sleep(seconds);
-            data.IncreseProgress(percent);
             data.Status = status;
+             data.SetProgress(percent);
+
+            
+
             if(data.Status==Status.Completed)
             {
                 data.Result = data.GetHashCode().ToString();
             }
 
             await SaveToDb(data);
-           
+           await _communicationHub.SendMessage(data.ConnectionId,data);
         }
 
         /// <summary>
@@ -135,10 +144,7 @@ namespace Abn.Analytics.Application
             return model;
         }
 
-        private int GetWait()
-        {
-            return _random.Next(1, 3);
-        }
+       
        
         private int Getstatus()
         {

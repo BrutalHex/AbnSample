@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,8 +10,15 @@ namespace Abn.Analytics.Domain
 {
     public class StatusObject: DomainEntity
     {
-    
+
+     
+
         public Status Status { get; set; }
+
+
+        public string StatusText => Status.ToString();
+
+
         public int Progress { get; set; } = 0;
 
         public string Result { get; set; }
@@ -30,12 +38,18 @@ namespace Abn.Analytics.Domain
         public string Email { get; set; }
 
 
-        public void IncreseProgress(int amount)
+        public void SetProgress(int amount)
         {
-            Progress += amount;
+            Progress = amount;
             if (Progress > 100)
                 Progress = 100;
-        }
 
+            if(Progress==100)
+            {
+                Status = Status.Completed;
+            }
+        }
+        [NotMapped]
+        public string ConnectionId { get; set; }
     }
 }

@@ -1,7 +1,8 @@
 /* eslint-disable camelcase */
-import {REACT_APP_Host_API} from './environments'
+import { REACT_APP_Host_API } from './environments';
 export class Setting {
-  static mainUrl:string = REACT_APP_Host_API;
-  static getApiUrl = (address: string): string =>  Setting.mainUrl + address;
+  static mainUrl: string = REACT_APP_Host_API + 'api/';
+  static baseAddress: string = REACT_APP_Host_API;
+  static getApiUrl = (address: string): string => Setting.mainUrl + address;
 }
 export default Setting;

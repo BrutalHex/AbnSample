@@ -7,14 +7,12 @@ import { SendData } from './AnalyticsCalculatorPageAction';
 import analyticsCalculator from './AnalyticsCalculator';
 
 const mapStateToProps = (state: RootState) => {
- 
   return { state: state };
 };
 
 const mapDispatchToProps = (dispatch: analyticsThunkDispatch) => {
   return {
-    handleSendClick: (values:any) => {
-
+    handleSendClick: (values: any) => {
       dispatch(SendData(values));
     },
   };

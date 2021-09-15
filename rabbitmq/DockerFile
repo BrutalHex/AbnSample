@@ -1,0 +1,4 @@
+FROM rabbitmq:3.8-management-alpine
+EXPOSE 15672/tcp 
+EXPOSE 5672/tcp
+RUN rabbitmq-plugins enable rabbitmq_federation_management rabbitmq_mqtt rabbitmq_stomp rabbitmq_shovel rabbitmq_shovel_management

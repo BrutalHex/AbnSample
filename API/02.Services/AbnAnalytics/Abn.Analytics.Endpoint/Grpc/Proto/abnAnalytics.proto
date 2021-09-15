@@ -11,6 +11,7 @@ rpc GetStatus(SearchInput) returns (StatusObject);
 message DataInput {
 string name=1;
 string email=2;
+string connectionId =3;
 } 
  
 message SearchInput{

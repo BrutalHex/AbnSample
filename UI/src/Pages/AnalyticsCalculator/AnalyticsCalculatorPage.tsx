@@ -1,82 +1,83 @@
 /* eslint-disable no-debugger */
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import * as yup from 'yup';
-
+import * as signalR from '@microsoft/signalr';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { Formik } from 'formik';
 import SpinnerContainer from '../../components/Spinner/Spinner';
 import { analyticsCalculatorPageProps } from './AnalyticsCalculatorPageContainer';
 import Setting from '../../base/settings';
-import axios from 'axios';
 
+require('@microsoft/signalr');
 
 const analyticsCalculatorPage: FunctionComponent<analyticsCalculatorPageProps> = (
   props: analyticsCalculatorPageProps
 ) => {
+  let [cmpVals, setCmpVals] = useState(props.state.status);
+  if (props.state.status != null && cmpVals == null) {
+    cmpVals = props.state.status;
+  }
+  let [connectionToHost, setConnectionToHost] = useState({} as any);
 
-  const [cmpVals, setCmpVals] = useState(props.state);
+  useEffect(() => {
+    (async function anyNameFunction() {
+      if (props.state.status == null) {
+        const con = new signalR.HubConnectionBuilder()
+          .withUrl(Setting.baseAddress + 'apphub')
+          .build();
 
- const [timer,setTimer]=useState(false);
+        con.on('SendMessage', (inputInfo: any) => {
+          debugger;
 
- let handle:any;
- debugger;
-      if(props.state.status != null && !timer)
-      {
-        setTimer(true);
-         handle=    setTimeout(() => {
-             
-            const fetchUrl = `${Setting.getApiUrl('Analytics/GetStatus')}/${props.state.status.Id}`;
-            debugger;
-    axios({
-      method: 'get',
-      url: fetchUrl,
-    }).then(function (response: any) {      debugger;
-      setCmpVals({...cmpVals,status:response.data});
-    });
-           }, 2000); 
+          setCmpVals(inputInfo);
+          props.state.status = inputInfo;
+        });
 
-         
-        
+        con.keepAliveIntervalInMilliseconds = 1000;
+
+        await con.start().catch(function (err: any) {
+          return console.error(err.toString());
+        });
+        setConnectionToHost(con);
+        connectionToHost = con;
       }
-        if(props.state.status != null && props.state.status.status!==0)
-           {
-            clearTimeout(handle);
-           }
-
-
-
- 
-
-
-
-
-
+    })();
+  }, []);
 
   const schema = yup.object({
-
-    Name:yup.string()
-    .required("Please enter the Name field")
-    .matches(/^[aA-zZ\s]+$/, "Only alphabets are allowed for Name field "),
-    Email:yup.string().trim().email('E-mail is not valid!').required('E-mail is required!')
-
-
+    Name: yup
+      .string()
+      .required('Please enter the Name field')
+      .matches(/^[aA-zZ\s]+$/, 'Only alphabets are allowed for Name field '),
+    Email: yup.string().trim().email('E-mail is not valid!').required('E-mail is required!'),
   });
 
   let statusObjectPreview = [<div key="thisisempty2332">no results</div>];
 
-  if (props.state.status != null && props.state.status) {
-    statusObjectPreview = Object.keys(props.state.status).map((property: any, index: number) => {
+  const previeFields = ['statusText', 'progress', 'result', 'name', 'email'];
+
+  if (cmpVals != null && cmpVals) {
+    statusObjectPreview = previeFields.map((property: any, index: number) => {
       return (
         <div className="row" key={`currencyValues_${property}_${index}`}>
           <div className="col-11 rate-vals border-bottom border-bottom-dashed">
             <span className="material-icons">info</span>
             <span className="title badge bg-info">{property}</span>
-            <span className="value">{ (props.state.status as any )[property] }</span>
+            <span className="value">{(cmpVals as any)[property]}</span>
           </div>
         </div>
       );
     });
+  }
+
+  let buttonItem = <div></div>;
+  if (props.state.status == null) {
+    buttonItem = (
+      <Button variant="primary" type="submit" className="w-100 mt-1">
+        Start
+      </Button>
+    );
   }
 
   return (
@@ -87,17 +88,18 @@ const analyticsCalculatorPage: FunctionComponent<analyticsCalculatorPageProps> =
             <Formik
               validationSchema={schema}
               initialValues={{
-              Name:'',
-              Email:''
+                Name: '',
+                Email: '',
               }}
               validate={(values) => {
                 const errors = {};
                 return errors;
               }}
               onSubmit={(values) => {
-             
-              
-                props.handleSendClick(values );
+                props.handleSendClick({
+                  ...values,
+                  connectionId: connectionToHost.connection.connectionId,
+                });
               }}
             >
               {({ handleSubmit, handleChange, handleBlur, values, isValid, errors }) => (
@@ -124,9 +126,7 @@ const analyticsCalculatorPage: FunctionComponent<analyticsCalculatorPageProps> =
                       onChange={handleChange}
                       isInvalid={!!errors.Name}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.Name}
-                    </Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{errors.Name}</Form.Control.Feedback>
                   </Form.Group>
                   <Form.Group controlId="validationFormikEmail">
                     <Form.Label>Email</Form.Label>
@@ -138,14 +138,10 @@ const analyticsCalculatorPage: FunctionComponent<analyticsCalculatorPageProps> =
                       onChange={handleChange}
                       isInvalid={!!errors.Email}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.Email}
-                    </Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{errors.Email}</Form.Control.Feedback>
                   </Form.Group>
 
-                  <Button variant="primary" type="submit" className="w-100 mt-1">
-                       Start
-                  </Button>
+                  {buttonItem}
                 </Form>
               )}
             </Formik>

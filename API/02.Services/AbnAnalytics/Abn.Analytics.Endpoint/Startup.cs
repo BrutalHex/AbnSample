@@ -16,7 +16,8 @@ using Abn.Framework.Core.Ef;
 using Abn.Analytics.Data.Ef;
 using Microsoft.EntityFrameworkCore;
 using Abn.Analytics.Domain.StatusObjectAggregate;
-
+using Abn.Analytics.Application.AbnHub;
+using Abn.Analytics.Endpoint.Configs;
 
 namespace Abn.Analytics.Endpoint
 {
@@ -47,6 +48,8 @@ namespace Abn.Analytics.Endpoint
 
             services.AddGrpc();
             services.AddGrpcReflection();
+            services.AddQueue(Configuration);
+            services.AddSingleton<ICommunicationHub, CommunicationHub>();
         }
 
   
@@ -66,7 +69,8 @@ namespace Abn.Analytics.Endpoint
                 endpoints.MapControllers();
                 endpoints.MapGrpcService<Abn.Analytics.Endpoint.Grpc.services.AnalyticsService>();
                 endpoints.MapGrpcReflectionService();
-             
+                endpoints.MapHub<CommunicationHub>("/apphub");
+
             });
            
         }

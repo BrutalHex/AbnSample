@@ -15,19 +15,16 @@ export function SendData(values: any): analyticsThunkResult<void> {
   return (dispatch: analyticsThunkDispatch) => {
     dispatch(creatAction(Spinner_Change, true));
 
- 
     const fetchUrl = `${Setting.getApiUrl('Analytics/StartCalculation')}`;
 
     axios({
       method: 'POST',
       url: fetchUrl,
-      data:values,
-    
+      data: values,
     }).then(function (response: any) {
-  
       let result = new AnalyticsCalculator();
       result = response.data;
-      
+
       dispatch(creatAction(Spinner_Change, false));
       dispatch(creatAction(analytics_Status, result));
     });

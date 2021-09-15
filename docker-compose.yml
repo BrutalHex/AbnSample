@@ -1,5 +1,21 @@
 version: "3.9"
 services:
+  rabbit:
+     image: ${DOCKER_REGISTRY-}abnrabbit
+     hostname: ${RABBIT_HOST}
+     restart: "always"
+     healthcheck:
+       test: rabbitmq-diagnostics -q ping
+       interval: 30s
+       timeout: 30s
+       retries: 3
+     ports:
+       - "15672:15672"
+       - "5672:5672"
+     build:
+       context: .
+       dockerfile: ./rabbitmq/DockerFile
+     env_file: .env
   SqlExpress:
     image: mcr.microsoft.com/mssql/server:2019-latest
     hostname: sqlexpress
@@ -13,6 +29,7 @@ services:
       image: ${DOCKER_REGISTRY-}api
       environment:
         - ASPNETCORE_ENVIRONMENT=Development
+        - RabbitMq__HostName=${RABBIT_HOST}
         - ConnectionStrings__db=Server=sqlexpress;User Id=sa;Password=123@hell456789DELTA;
       ports:
         - "5001:5001"
@@ -26,6 +43,7 @@ services:
         dockerfile: API/02.Services/AbnAnalytics/Abn.Analytics.Endpoint/Dockerfile
       depends_on:
         - SqlExpress
+        - rabbit
   Abn.UI:
           image: ${DOCKER_REGISTRY-}ui
           ports:

@@ -11,6 +11,9 @@ namespace Abn.Analytics.ApplicationContract
     {
         public Task<StatusObject> StartCalculation(StatusObject model);
         public Task<StatusObject> GetStatus(Guid id);
-      
+
+       public Task ProcessCalculation(StatusObject input);
+
+
     }
 }
